@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avian Dominance: Flight & Aerodynamics Survival</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 3D Canvas Container -->
+  <div id="game-container"></div>
+
+  <!-- Dynamic Speed Wind Lines Canvas -->
+  <canvas id="speed-lines-canvas"></canvas>
+
+  <!-- Flight HUD Overlay -->
+  <div id="hud-root">
+    <!-- Top Bar Status -->
+    <header class="hud-header">
+      <div class="hud-brand glass-card">
+        <span class="icon">🦅</span>
+        <div class="brand-text">
+          <h1>AVIAN SURVIVAL</h1>
+        </div>
+        <div id="hud-state-badge" class="state-badge badge-glide">GLIDING</div>
+      </div>
+
+      <!-- Center Alerts -->
+      <div class="hud-center-alerts">
+        <div id="hud-thermal-alert" class="alert-badge thermal" style="display: none;">
+          ⚡ THERMAL UPDRAFT (+LIFT)
+        </div>
+        <div id="hud-stall-alert" class="alert-badge stall" style="display: none;">
+          ⚠️ STALL WARNING - PITCH DOWN!
+        </div>
+      </div>
+
+      <!-- Quick Action Controls -->
+      <div class="hud-quick-actions">
+        <button id="btn-room-badge" class="hud-btn highlight" title="Multiplayer Sky Room">🌐 Room: Solo</button>
+        <button id="btn-toggle-invert" class="hud-btn" title="Toggle Invert Pitch">↕️ Invert: OFF</button>
+        <button id="btn-toggle-mouse" class="hud-btn" title="Toggle Mouse Steering">🖱️ Mouse: OFF</button>
+        <button id="btn-toggle-controls" class="hud-btn" title="Toggle Controls Guide">⌨️ Controls</button>
+        <button id="btn-flap" class="hud-btn primary" title="Flap Wings (Space)">🪶 FLAP (Space)</button>
+      </div>
+    </header>
+
+    <!-- Center Crosshair & Flight Reticle -->
+    <div id="hud-combat-crosshair">
+      <div class="crosshair-center"></div>
+      <div class="crosshair-ring"></div>
+    </div>
+
+    <!-- Center Artificial Horizon Reticle -->
+    <div id="hud-horizon-container">
+      <div id="hud-horizon-ladder">
+        <div class="ladder-line pitch-up-20">+20°</div>
+        <div class="ladder-line pitch-up-10">+10°</div>
+        <div class="ladder-line pitch-zero">------ 0° ------</div>
+        <div class="ladder-line pitch-down-10">-10°</div>
+        <div class="ladder-line pitch-down-20">-20°</div>
+      </div>
+      <div id="hud-horizon-reticle">
+        <div class="reticle-dot"></div>
+        <div class="reticle-wing left"></div>
+        <div class="reticle-wing right"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Left: Flight Telemetry & Player Vitals Combined Dashboard -->
+    <div class="hud-dashboard-left glass-card">
+      <div class="dashboard-header">
+        <span class="label">FLIGHT TELEMETRY</span>
+        <span id="hud-aoa-val" class="sub-badge">AoA: 2.4°</span>
+      </div>
+
+      <!-- Gauges Grid -->
+      <div class="telemetry-grid">
+        <div class="gauge-box">
+          <span class="gauge-title">AIRSPEED</span>
+          <div class="gauge-val-row">
+            <span id="hud-speed-val" class="val-number">65</span>
+            <span class="val-unit">KM/H</span>
+          </div>
+        </div>
+
+        <div class="gauge-box">
+          <span class="gauge-title">ALTITUDE</span>
+          <div class="gauge-val-row">
+            <span id="hud-alt-val" class="val-number">95</span>
+            <span class="val-unit">M</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vitals Bars: Health & Stamina -->
+      <div class="vitals-section">
+        <div class="vital-row">
+          <div class="vital-labels">
+            <span>HEALTH</span>
+            <strong id="hud-health-text" style="color: #ef4444;">100 HP</strong>
+          </div>
+          <div class="vital-bar-bg">
+            <div id="hud-health-fill" class="vital-fill health-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <div class="vital-row">
+          <div class="vital-labels">
+            <span>STAMINA</span>
+            <strong id="hud-stamina-text" style="color: #10b981;">100%</strong>
+          </div>
+          <div class="vital-bar-bg">
+            <div id="hud-stamina-fill" class="vital-fill stamina-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Center: Combat Abilities Hotbar -->
+    <div class="hud-combat-hotbar glass-card">
+      <div id="ability-talon" class="ability-slot" title="Talon Melee Strike (F or Left Click)">
+        <div class="key-bind">F / L-CLICK</div>
+        <div class="ability-icon">🦅</div>
+        <div class="ability-name">Talon Strike</div>
+        <div id="cd-talon" class="cooldown-overlay" style="height: 0%;"></div>
+      </div>
+      <div id="ability-wind" class="ability-slot" title="Wind Blade Projectile (E or Right Click)">
+        <div class="key-bind">E / R-CLICK</div>
+        <div class="ability-icon">🌀</div>
+        <div class="ability-name">Wind Blade</div>
+        <div id="cd-wind" class="cooldown-overlay" style="height: 0%;"></div>
+      </div>
+      <div id="ability-shockwave" class="ability-slot" title="Sonic Screech Shockwave (Q)">
+        <div class="key-bind">Q</div>
+        <div class="ability-icon">💥</div>
+        <div class="ability-name">Sonic Screech</div>
+        <div id="cd-shockwave" class="cooldown-overlay" style="height: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Right: Radar & Nest Resources Combined Panel -->
+    <div class="hud-dashboard-right glass-card">
+      <div class="radar-box">
+        <div class="radar-header">
+          <span>RADAR</span>
+          <span class="legend">🟠Nest 🟡Updraft 🔴Enemy</span>
+        </div>
+        <div class="minimap-wrapper">
+          <canvas id="minimap-canvas" width="130" height="130"></canvas>
+        </div>
+      </div>
+
+      <!-- Nest Resources Counters -->
+      <div class="resources-box">
+        <div class="resources-title">NEST BASE MATERIALS</div>
+        <div class="res-grid">
+          <div class="res-item" title="Twigs for Nest Structure">
+            <span class="res-icon">🪵</span>
+            <span class="res-name">Twigs</span>
+            <strong id="inv-twigs">0</strong>
+          </div>
+          <div class="res-item" title="Feathers for Bedding">
+            <span class="res-icon">🪶</span>
+            <span class="res-name">Feathers</span>
+            <strong id="inv-feathers">0</strong>
+          </div>
+          <div class="res-item" title="Pebbles for Base">
+            <span class="res-icon">🪨</span>
+            <span class="res-name">Pebbles</span>
+            <strong id="inv-pebbles">0</strong>
+          </div>
+          <div class="res-item" title="Berries for Health">
+            <span class="res-icon">🍒</span>
+            <span class="res-name">Berries</span>
+            <strong id="inv-berries">0</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible Controls Guide Overlay Card -->
+    <aside id="hud-controls-panel" class="hud-controls-panel glass-card hidden">
+      <div class="panel-header">
+        <span>FLIGHT & COMBAT CONTROLS</span>
+        <button id="btn-close-controls" class="btn-close">✕</button>
+      </div>
+      <ul class="control-list">
+        <li><kbd>F</kbd> / <kbd>L-Click</kbd> <span class="action-highlight">🦅 Talon Strike</span></li>
+        <li><kbd>E</kbd> / <kbd>R-Click</kbd> <span class="action-highlight">🌀 Wind Blade</span></li>
+        <li><kbd>Q</kbd> <span class="action-highlight">💥 Sonic Screech</span></li>
+        <li><kbd>W</kbd> / <kbd>S</kbd> <span>Pitch Down / Up</span></li>
+        <li><kbd>A</kbd> / <kbd>D</kbd> <span>Roll & Bank Turn</span></li>
+        <li><kbd>SPACE</kbd> <span>Flap Wings (Thrust)</span></li>
+        <li><kbd>SHIFT</kbd> <span>Tuck Dive (+Dmg)</span></li>
+        <li><kbd>CTRL</kbd> <span>Airbrake / Flare</span></li>
+        <li><kbd>C</kbd> <span>Raptor Screech</span></li>
+        <li><kbd>V</kbd> <span>Cycle Camera</span></li>
+        <li><kbd>R</kbd> <span>Reset Position</span></li>
+        <li><kbd>M</kbd> <span>Mute Audio</span></li>
+      </ul>
+    </aside>
+
+    <!-- Toast Notification Banner -->
+    <div id="hud-toast" class="hud-toast">Welcome to the Open Skies!</div>
+  </div>
+
+  <!-- Interactive Start / Multiplayer Screen -->
+  <div id="start-overlay" class="start-overlay">
+    <div class="start-modal glass-card">
+      <div class="modal-badge">MULTIPLAYER 3D BIRD FLIGHT & SURVIVAL</div>
+      <h2>AVIAN DOMINANCE</h2>
+      <p>Fly with friends online or solo against AI predators! Soar in real aerodynamic flight, cast Wind Blades & Talon Strikes, and gather resources for your nest.</p>
+
+      <!-- Multiplayer Mode Selection Tabs -->
+      <div class="multiplayer-selection">
+        <div class="mp-actions-grid">
+          <!-- 1. Solo Play -->
+          <div class="mp-card">
+            <h4>🦅 Solo Flight</h4>
+            <p>Explore the skies with AI hawks, thermals, and resource gathering.</p>
+            <button id="btn-play-solo" class="btn-launch secondary">
+              <span>PLAY SOLO SKY</span>
+            </button>
+          </div>
+
+          <!-- 2. Create Room -->
+          <div class="mp-card highlight">
+            <h4>🌐 Host Sky Room</h4>
+            <p>Generate a room code to invite your friends to fly in your world.</p>
+            <button id="btn-create-room" class="btn-launch primary">
+              <span>CREATE SKY ROOM</span>
+            </button>
+            <div id="host-code-display" class="host-code-box" style="display: none;">
+              <span>Share Code:</span>
+              <strong id="display-room-id">SKY-1234</strong>
+              <button id="btn-copy-link" class="btn-copy" title="Copy Invite Link">📋 Copy Link</button>
+            </div>
+          </div>
+
+          <!-- 3. Join Room -->
+          <div class="mp-card">
+            <h4>🔗 Join Friend's Room</h4>
+            <p>Enter your friend's room code to enter their sky server.</p>
+            <div class="join-input-row">
+              <input type="text" id="input-room-code" placeholder="e.g. SKY-8472" maxlength="12" />
+              <button id="btn-join-room" class="btn-join">JOIN</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-subtext">Runs 100% Peer-to-Peer over WebRTC &middot; Deployable straight to Vercel with zero server cost</div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
