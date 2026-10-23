@@ -600,7 +600,7 @@ const gentle = this.velocity.y > -4.0;
       const flapFrequency = 20;
       this.flapCycle += delta * flapFrequency;
       const flapAngle = Math.sin(this.flapCycle) * 0.75;
-      const outerFlap = Math.sin(this.flapCycle - 0.3) * 0.55);
+      const outerFlap = Math.sin(this.flapCycle - 0.3) * 0.55;
       this.leftWingRoot.rotation.z = flapAngle;
       this.rightWingRoot.rotation.z = -flapAngle;
 
