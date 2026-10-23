@@ -51,53 +51,55 @@ class Game {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.1;
+    this.renderer.toneMappingExposure = 1.15;
     this.container.appendChild(this.renderer.domElement);
 
-    // Scene & Fog
+    // Scene & Deep Enchanted Forest Atmosphere Fog (tuned for expansive 3.6km panoramic views)
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x87ceeb);
-    this.scene.fog = new THREE.FogExp2(0xb8e2f2, 0.0018);
+    this.scene.background = new THREE.Color(0x0e281b);
+    this.scene.fog = new THREE.FogExp2(0x133825, 0.0012);
 
-    // Camera
-    this.camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 2000);
+    // Camera with closer near-plane and deep 4500m far-plane for expansive forest exploration
+    this.camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.05, 4500);
   }
 
   _initScene() {
-    // Sun & Sky Lighting
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    // Sun & Canopy Lighting
+    this.ambientLight = new THREE.AmbientLight(0xdcfce7, 0.6);
     this.scene.add(this.ambientLight);
 
-    this.sunLight = new THREE.DirectionalLight(0xfff3d6, 1.8);
-    this.sunLight.position.set(150, 300, 200);
+    // Warm Sunbeam Directional Light
+    this.sunLight = new THREE.DirectionalLight(0xfff0d0, 1.85);
+    this.sunLight.position.set(150, 320, 180);
     this.sunLight.castShadow = true;
     this.sunLight.shadow.mapSize.width = 2048;
     this.sunLight.shadow.mapSize.height = 2048;
-    this.sunLight.shadow.camera.near = 10;
-    this.sunLight.shadow.camera.far = 700;
-    const d = 160;
+    this.sunLight.shadow.camera.near = 5;
+    this.sunLight.shadow.camera.far = 900;
+    const d = 220;
     this.sunLight.shadow.camera.left = -d;
     this.sunLight.shadow.camera.right = d;
     this.sunLight.shadow.camera.top = d;
     this.sunLight.shadow.camera.bottom = -d;
     this.scene.add(this.sunLight);
 
-    // Hemisphere Light for rich natural ambient gradient
-    const hemiLight = new THREE.HemisphereLight(0x7ec0ee, 0x3d4a29, 0.55);
+    // Hemisphere Light for lush woodland greens & earth shadows
+    const hemiLight = new THREE.HemisphereLight(0x86efac, 0x1c2b19, 0.6);
     this.scene.add(hemiLight);
 
     // Audio synthesizer
     this.sound = new SoundFX();
 
-    // Combat System (Projectiles, shockwaves, damage particles)
+    // Combat System
     this.combat = new CombatSystem(this.scene);
 
-    // World & Terrain
+    // Enchanted World & Giant Forest
     this.world = new World(this.scene);
 
-    // Bird Entity
+    // Small Forest Bird Entity
     this.bird = new Bird();
-    this.bird.position.set(30, 95, 45); // Start high in sky above nest
+    this.bird.position.copy(this.world.getNestStandPosition());
+    this.bird.isGrounded = true; // Safe perching inside the Great Tree nest
     this.scene.add(this.bird);
 
     // HUD Instruments
@@ -115,6 +117,21 @@ class Game {
           this.network.broadcast({ type: 'RESOURCE_COLLECTED', index: resIndex });
         }
       }
+    };
+
+    // Bark / branch impact feedback
+    window.onBirdImpact = (pos, damage, normal) => {
+      this.combat.spawnHitParticles(pos, 0x8b5a2b, 10);
+      this.sound.playHitImpact();
+      if (damage >= 6) {
+        this._showPickupToast(`💥 Bark Impact! -${Math.round(damage)} HP`);
+      }
+    };
+
+    // Perch / touchdown feedback
+    window.onBirdLanded = (onBranch) => {
+      this.sound.playFlap();
+      this._showPickupToast(onBranch ? '🌿 Perched safely on a branch' : '🍃 Landed on the forest floor');
     };
   }
 
@@ -279,26 +296,42 @@ class Game {
           });
         }
       }
+      if (e.code === 'KeyB') {
+        // Deposit Collected Materials & Upgrade Nest
+        this.depositNestMaterials();
+      }
       if (e.code === 'KeyC') {
         this.sound.playEagleCry();
-        this._showPickupToast('🦅 Eagle Cry Screech!');
+        this._showPickupToast('🎶 Melodious Songbird Warble!');
       }
       if (e.code === 'KeyV') {
         this._cycleCamera();
+      }
+      if (e.code === 'KeyL') {
+        // Land on the branch / forest floor below, or take off again
+        const mode = this.bird.toggleLanding();
+        if (mode === 'land') {
+          this._showPickupToast('🪶 Swooping down to perch… (press L again to cancel)');
+        } else if (mode === 'takeoff') {
+          this._showPickupToast('🕊️ Flapping back into flight!');
+        } else {
+          this._showPickupToast('✈️ Landing cancelled');
+        }
       }
       if (e.code === 'KeyM') {
         const isMuted = this.sound.toggleMute();
         this._showPickupToast(isMuted ? '🔇 Audio Muted' : '🔊 Audio Active');
       }
       if (e.code === 'KeyR') {
-        // Reset flight position
-        this.bird.position.set(0, 110, 0);
-        this.bird.velocity.set(0, 0, -18);
+        // Reset flight position to Great Tree nest
+        this.bird.position.copy(this.world.getNestStandPosition());
+        this.bird.velocity.set(0, 0, 0);
         this.bird.quaternion.identity();
-        this.bird.isGrounded = false;
-        this.bird.stamina = 100;
-        this.bird.health = 100;
-        this._showPickupToast('✈️ Repositioned to Altitude');
+        this.bird.isGrounded = true;
+        this.bird.wantsLanding = false;
+        this.bird.stamina = this.bird.maxStamina;
+        this.bird.health = this.bird.maxHealth;
+        this._showPickupToast('🪺 Repositioned to Great Tree Nest');
       }
 
       this._updateKeyboardInput(keysDown);
@@ -387,6 +420,16 @@ class Game {
       });
     }
 
+    // Nest Upgrade Button listeners
+    const btnUpgradeNest = document.getElementById('btn-upgrade-nest');
+    if (btnUpgradeNest) {
+      btnUpgradeNest.addEventListener('click', () => this.depositNestMaterials());
+    }
+    const btnDepositPrompt = document.getElementById('btn-deposit-prompt');
+    if (btnDepositPrompt) {
+      btnDepositPrompt.addEventListener('click', () => this.depositNestMaterials());
+    }
+
     // Controls Guide Drawer toggle
     const toggleControlsBtn = document.getElementById('btn-toggle-controls');
     const closeControlsBtn = document.getElementById('btn-close-controls');
@@ -406,6 +449,27 @@ class Game {
         toggleControls();
       }
     });
+  }
+
+  depositNestMaterials() {
+    this.sound.init();
+    if (!this.world || !this.bird) return;
+
+    // Check distance to Nest
+    const distToNest = this.bird.position.distanceTo(this.world.nestSite.position);
+    if (distToNest > 20.0) {
+      this._showPickupToast('📍 Fly closer to the Great Tree Nest to deposit materials!');
+      return;
+    }
+
+    const result = this.world.depositMaterialsToNest(this.bird);
+    if (result.success) {
+      this.sound.playPickup();
+      this.combat.spawnHitParticles(this.world.nestSite.position, 0xffd166, 30);
+      this._showPickupToast(result.message);
+    } else {
+      this._showPickupToast(`⚠️ ${result.message}`);
+    }
   }
 
   _updateKeyboardInput(keys) {
@@ -468,46 +532,46 @@ class Game {
 
     // Dynamic FOV stretching during high-speed dives
     const speed = this.bird.aerodynamics.airspeed;
-    const targetFov = 65 + THREE.MathUtils.clamp((speed - 15) * 1.2, 0, 35);
+    const targetFov = 65 + THREE.MathUtils.clamp((speed - 9) * 1.6, 0, 30);
     this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, targetFov, delta * 4.0);
     this.camera.updateProjectionMatrix();
 
     if (this.cameraMode === 'chase') {
-      // Dynamic chase camera with speed trailing & banking lean
-      const camDist = 6.8 + Math.min(6, speed * 0.12);
-      const camHeight = 2.4;
+      // Intimate close chase camera for small bird (dwarfed by massive trees & branches)
+      const camDist = 3.2 + Math.min(2.2, speed * 0.14);
+      const camHeight = 0.95;
 
       const idealOffset = forward.clone().multiplyScalar(-camDist).add(new THREE.Vector3(0, camHeight, 0));
       const targetCamPos = birdPos.clone().add(idealOffset);
 
-      // Camera shake at extreme speeds
-      if (speed > 32) {
-        const shake = (speed - 32) * 0.012;
+      // Subtle camera vibration at extreme speeds
+      if (speed > 18) {
+        const shake = (speed - 18) * 0.014;
         targetCamPos.x += (Math.random() - 0.5) * shake;
         targetCamPos.y += (Math.random() - 0.5) * shake;
       }
 
-      this.currentCamPos.lerp(targetCamPos, delta * 6.5);
-      const targetLook = birdPos.clone().add(forward.clone().multiplyScalar(10));
-      this.currentCamLook.lerp(targetLook, delta * 8.0);
+      this.currentCamPos.lerp(targetCamPos, delta * 7.5);
+      const targetLook = birdPos.clone().add(forward.clone().multiplyScalar(5.5));
+      this.currentCamLook.lerp(targetLook, delta * 9.0);
 
       this.camera.position.copy(this.currentCamPos);
       this.camera.lookAt(this.currentCamLook);
 
     } else if (this.cameraMode === 'cockpit') {
-      // First person beak camera
-      const headPos = birdPos.clone().add(new THREE.Vector3(0, 0.4, -0.6).applyQuaternion(this.bird.quaternion));
+      // First person songbird beak camera
+      const headPos = birdPos.clone().add(new THREE.Vector3(0, 0.15, -0.22).applyQuaternion(this.bird.quaternion));
       this.camera.position.copy(headPos);
-      const lookTarget = headPos.clone().add(forward.clone().multiplyScalar(40));
+      const lookTarget = headPos.clone().add(forward.clone().multiplyScalar(30));
       this.camera.lookAt(lookTarget);
 
     } else if (this.cameraMode === 'orbit') {
       // Cinematic slow orbit
       const time = Date.now() * 0.0006;
       this.camera.position.set(
-        birdPos.x + Math.sin(time) * 10,
-        birdPos.y + 4,
-        birdPos.z + Math.cos(time) * 10
+        birdPos.x + Math.sin(time) * 5.5,
+        birdPos.y + 2.0,
+        birdPos.z + Math.cos(time) * 5.5
       );
       this.camera.lookAt(birdPos);
     }

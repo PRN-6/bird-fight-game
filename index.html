@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Avian Dominance: Flight & Aerodynamics Survival</title>
+  <title>Canopy Song: Small Bird in the Great Forest</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -21,20 +21,20 @@
     <!-- Top Bar Status -->
     <header class="hud-header">
       <div class="hud-brand glass-card">
-        <span class="icon">🦅</span>
+        <span class="icon">🐦</span>
         <div class="brand-text">
-          <h1>AVIAN SURVIVAL</h1>
+          <h1>CANOPY SONG</h1>
         </div>
-        <div id="hud-state-badge" class="state-badge badge-glide">GLIDING</div>
+        <div id="hud-state-badge" class="state-badge badge-grounded">PERCHED ON BRANCH</div>
       </div>
 
       <!-- Center Alerts -->
       <div class="hud-center-alerts">
         <div id="hud-thermal-alert" class="alert-badge thermal" style="display: none;">
-          ⚡ THERMAL UPDRAFT (+LIFT)
+          🍃 CANOPY THERMAL (+LIFT)
         </div>
         <div id="hud-stall-alert" class="alert-badge stall" style="display: none;">
-          ⚠️ STALL WARNING - PITCH DOWN!
+          ⚠️ LOW SPEED - PITCH NOSE DOWN!
         </div>
       </div>
 
@@ -52,22 +52,6 @@
     <div id="hud-combat-crosshair">
       <div class="crosshair-center"></div>
       <div class="crosshair-ring"></div>
-    </div>
-
-    <!-- Center Artificial Horizon Reticle -->
-    <div id="hud-horizon-container">
-      <div id="hud-horizon-ladder">
-        <div class="ladder-line pitch-up-20">+20°</div>
-        <div class="ladder-line pitch-up-10">+10°</div>
-        <div class="ladder-line pitch-zero">------ 0° ------</div>
-        <div class="ladder-line pitch-down-10">-10°</div>
-        <div class="ladder-line pitch-down-20">-20°</div>
-      </div>
-      <div id="hud-horizon-reticle">
-        <div class="reticle-dot"></div>
-        <div class="reticle-wing left"></div>
-        <div class="reticle-wing right"></div>
-      </div>
     </div>
 
     <!-- Bottom Left: Flight Telemetry & Player Vitals Combined Dashboard -->
@@ -122,55 +106,48 @@
 
     <!-- Bottom Center: Combat Abilities Hotbar -->
     <div class="hud-combat-hotbar glass-card">
-      <div id="ability-talon" class="ability-slot" title="Talon Melee Strike (F or Left Click)">
+      <div id="ability-talon" class="ability-slot" title="Songbird Melee Strike (F or Left Click)">
         <div class="key-bind">F / L-CLICK</div>
-        <div class="ability-icon">🦅</div>
-        <div class="ability-name">Talon Strike</div>
+        <div class="ability-icon">🐦</div>
+        <div class="ability-name">Beak Strike</div>
         <div id="cd-talon" class="cooldown-overlay" style="height: 0%;"></div>
       </div>
-      <div id="ability-wind" class="ability-slot" title="Wind Blade Projectile (E or Right Click)">
+      <div id="ability-wind" class="ability-slot" title="Canopy Wind Blade (E or Right Click)">
         <div class="key-bind">E / R-CLICK</div>
-        <div class="ability-icon">🌀</div>
-        <div class="ability-name">Wind Blade</div>
+        <div class="ability-icon">🍃</div>
+        <div class="ability-name">Leaf Gust</div>
         <div id="cd-wind" class="cooldown-overlay" style="height: 0%;"></div>
       </div>
-      <div id="ability-shockwave" class="ability-slot" title="Sonic Screech Shockwave (Q)">
+      <div id="ability-shockwave" class="ability-slot" title="Melodious Song Burst Shockwave (Q)">
         <div class="key-bind">Q</div>
-        <div class="ability-icon">💥</div>
-        <div class="ability-name">Sonic Screech</div>
+        <div class="ability-icon">✨</div>
+        <div class="ability-name">Song Burst</div>
         <div id="cd-shockwave" class="cooldown-overlay" style="height: 0%;"></div>
       </div>
     </div>
 
-    <!-- Bottom Right: Radar & Nest Resources Combined Panel -->
+    <!-- Bottom Right: Nest Resources & Base Panel -->
     <div class="hud-dashboard-right glass-card">
-      <div class="radar-box">
-        <div class="radar-header">
-          <span>RADAR</span>
-          <span class="legend">🟠Nest 🟡Updraft 🔴Enemy</span>
-        </div>
-        <div class="minimap-wrapper">
-          <canvas id="minimap-canvas" width="130" height="130"></canvas>
-        </div>
-      </div>
-
       <!-- Nest Resources Counters -->
       <div class="resources-box">
-        <div class="resources-title">NEST BASE MATERIALS</div>
+        <div class="resources-header-row">
+          <span class="resources-title">GREAT TREE NEST</span>
+          <span id="hud-nest-badge" class="nest-level-badge">LVL 1</span>
+        </div>
         <div class="res-grid">
           <div class="res-item" title="Twigs for Nest Structure">
             <span class="res-icon">🪵</span>
             <span class="res-name">Twigs</span>
             <strong id="inv-twigs">0</strong>
           </div>
-          <div class="res-item" title="Feathers for Bedding">
+          <div class="res-item" title="Feathers for Warmth">
             <span class="res-icon">🪶</span>
             <span class="res-name">Feathers</span>
             <strong id="inv-feathers">0</strong>
           </div>
-          <div class="res-item" title="Pebbles for Base">
-            <span class="res-icon">🪨</span>
-            <span class="res-name">Pebbles</span>
+          <div class="res-item" title="Golden Acorns for Nest">
+            <span class="res-icon">🌰</span>
+            <span class="res-name">Acorns</span>
             <strong id="inv-pebbles">0</strong>
           </div>
           <div class="res-item" title="Berries for Health">
@@ -179,60 +156,75 @@
             <strong id="inv-berries">0</strong>
           </div>
         </div>
+        <button id="btn-upgrade-nest" class="btn-upgrade-nest" style="display: none;">
+          🔨 Deposit & Upgrade [B]
+        </button>
       </div>
+    </div>
+
+    <!-- Nest Upgrade Near-Prompt Banner -->
+    <div id="hud-nest-prompt" class="hud-nest-prompt" style="display: none;">
+      <span class="nest-prompt-icon">🪺</span>
+      <div class="nest-prompt-text">
+        <strong id="nest-prompt-title">Great Tree Nest Sanctuary</strong>
+        <span id="nest-prompt-req">Press [B] or Click to Deposit Materials</span>
+      </div>
+      <button id="btn-deposit-prompt" class="btn-deposit-action">UPGRADE [B]</button>
     </div>
 
     <!-- Collapsible Controls Guide Overlay Card -->
     <aside id="hud-controls-panel" class="hud-controls-panel glass-card hidden">
       <div class="panel-header">
-        <span>FLIGHT & COMBAT CONTROLS</span>
+        <span>FOREST FLIGHT CONTROLS</span>
         <button id="btn-close-controls" class="btn-close">✕</button>
       </div>
       <ul class="control-list">
-        <li><kbd>F</kbd> / <kbd>L-Click</kbd> <span class="action-highlight">🦅 Talon Strike</span></li>
-        <li><kbd>E</kbd> / <kbd>R-Click</kbd> <span class="action-highlight">🌀 Wind Blade</span></li>
-        <li><kbd>Q</kbd> <span class="action-highlight">💥 Sonic Screech</span></li>
-        <li><kbd>W</kbd> / <kbd>S</kbd> <span>Pitch Down / Up</span></li>
-        <li><kbd>A</kbd> / <kbd>D</kbd> <span>Roll & Bank Turn</span></li>
-        <li><kbd>SPACE</kbd> <span>Flap Wings (Thrust)</span></li>
-        <li><kbd>SHIFT</kbd> <span>Tuck Dive (+Dmg)</span></li>
-        <li><kbd>CTRL</kbd> <span>Airbrake / Flare</span></li>
-        <li><kbd>C</kbd> <span>Raptor Screech</span></li>
-        <li><kbd>V</kbd> <span>Cycle Camera</span></li>
-        <li><kbd>R</kbd> <span>Reset Position</span></li>
+        <li><kbd>F</kbd> / <kbd>L-Click</kbd> <span class="action-highlight">🐦 Beak / Talon Strike</span></li>
+        <li><kbd>E</kbd> / <kbd>R-Click</kbd> <span class="action-highlight">🍃 Leaf Wind Blade</span></li>
+        <li><kbd>Q</kbd> <span class="action-highlight">✨ Song Burst Shockwave</span></li>
+        <li><kbd>B</kbd> <span class="action-highlight">🪺 Deposit & Upgrade Nest</span></li>
+        <li><kbd>W</kbd> / <kbd>S</kbd> <span>Pitch / Walk along branch</span></li>
+        <li><kbd>A</kbd> / <kbd>D</kbd> <span>Roll &amp; branch weaving</span></li>
+        <li><kbd>SPACE</kbd> <span>Flap Wings / Takeoff Leap</span></li>
+        <li><kbd>SHIFT</kbd> <span>Tuck Dive Through Canopy</span></li>
+        <li><kbd>L</kbd> <span>Land &amp; Perch / Take Off Again</span></li>
+        <li><kbd>CTRL</kbd> <span>Airbrake &amp; settle on a branch</span></li>
+        <li><kbd>C</kbd> <span>Songbird Chirp Warble</span></li>
+        <li><kbd>V</kbd> <span>Cycle Camera Mode</span></li>
+        <li><kbd>R</kbd> <span>Reset to High Nest</span></li>
         <li><kbd>M</kbd> <span>Mute Audio</span></li>
       </ul>
     </aside>
 
     <!-- Toast Notification Banner -->
-    <div id="hud-toast" class="hud-toast">Welcome to the Open Skies!</div>
+    <div id="hud-toast" class="hud-toast">Perched high in the Ancestral Great Tree!</div>
   </div>
 
   <!-- Interactive Start / Multiplayer Screen -->
   <div id="start-overlay" class="start-overlay">
     <div class="start-modal glass-card">
-      <div class="modal-badge">MULTIPLAYER 3D BIRD FLIGHT & SURVIVAL</div>
-      <h2>AVIAN DOMINANCE</h2>
-      <p>Fly with friends online or solo against AI predators! Soar in real aerodynamic flight, cast Wind Blades & Talon Strikes, and gather resources for your nest.</p>
+      <div class="modal-badge">COLOSSAL FOREST FLIGHT & SURVIVAL</div>
+      <h2>CANOPY SONG</h2>
+      <p>You are a small, nimble forest songbird exploring a colossal enchanted forest of giant ancient trees, towering redwood trunks, sprawling thick branches, and sunlit clearings. Land and perch on branches, dodge forest predators, and gather materials for your high nest!</p>
 
       <!-- Multiplayer Mode Selection Tabs -->
       <div class="multiplayer-selection">
         <div class="mp-actions-grid">
           <!-- 1. Solo Play -->
           <div class="mp-card">
-            <h4>🦅 Solo Flight</h4>
-            <p>Explore the skies with AI hawks, thermals, and resource gathering.</p>
+            <h4>🌲 Solo Flight</h4>
+            <p>Explore the giant canopy, weave between thick branches, and collect forest berries.</p>
             <button id="btn-play-solo" class="btn-launch secondary">
-              <span>PLAY SOLO SKY</span>
+              <span>EXPLORE FOREST</span>
             </button>
           </div>
 
           <!-- 2. Create Room -->
           <div class="mp-card highlight">
-            <h4>🌐 Host Sky Room</h4>
-            <p>Generate a room code to invite your friends to fly in your world.</p>
+            <h4>🌐 Host Forest Flock</h4>
+            <p>Invite friends to soar together through the colossal ancient trees.</p>
             <button id="btn-create-room" class="btn-launch primary">
-              <span>CREATE SKY ROOM</span>
+              <span>CREATE FOREST ROOM</span>
             </button>
             <div id="host-code-display" class="host-code-box" style="display: none;">
               <span>Share Code:</span>
@@ -243,8 +235,8 @@
 
           <!-- 3. Join Room -->
           <div class="mp-card">
-            <h4>🔗 Join Friend's Room</h4>
-            <p>Enter your friend's room code to enter their sky server.</p>
+            <h4>🔗 Join Friend's Flock</h4>
+            <p>Enter your friend's room code to join their forest sanctuary.</p>
             <div class="join-input-row">
               <input type="text" id="input-room-code" placeholder="e.g. SKY-8472" maxlength="12" />
               <button id="btn-join-room" class="btn-join">JOIN</button>
@@ -253,7 +245,7 @@
         </div>
       </div>
 
-      <div class="modal-subtext">Runs 100% Peer-to-Peer over WebRTC &middot; Deployable straight to Vercel with zero server cost</div>
+      <div class="modal-subtext">Runs 100% Peer-to-Peer over WebRTC &middot; Ultra-smooth 3D flight in the canopy</div>
     </div>
   </div>
 

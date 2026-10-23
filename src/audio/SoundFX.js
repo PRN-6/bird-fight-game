@@ -12,6 +12,9 @@ export class SoundFX {
   }
 
   init() {
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
     if (this.isInitialized) return;
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -87,7 +90,7 @@ export class SoundFX {
       this.ctx.resume();
     }
 
-    const speedRatio = Math.min(1.0, Math.max(0.0, (airspeed - 5) / 45));
+    const speedRatio = Math.min(1.0, Math.max(0.0, (airspeed - 4) / 20));
 
     // Dynamic wind frequency and volume
     if (this.windFilter && this.windGain) {
@@ -99,62 +102,63 @@ export class SoundFX {
 
     // High speed dive howl effect
     if (this.diveGain && this.diveFilter) {
-      const diveIntensity = (isDiving || airspeed > 30) ? Math.min(1.0, (airspeed - 20) / 25) : 0.0;
+      const diveIntensity = (isDiving || airspeed > 18) ? Math.min(1.0, (airspeed - 11) / 12) : 0.0;
       this.diveGain.gain.setTargetAtTime(diveIntensity * 0.45, this.ctx.currentTime, 0.15);
-      this.diveFilter.frequency.setTargetAtTime(800 + airspeed * 40, this.ctx.currentTime, 0.1);
+      this.diveFilter.frequency.setTargetAtTime(600 + airspeed * 55, this.ctx.currentTime, 0.1);
     }
   }
 
   playFlap() {
     if (!this.isInitialized || this.isMuted || !this.ctx) return;
 
-    // Wing flap swoosh (Dual low-frequency punch + swept noise burst)
+    // Small bird nimble wing flutter swoosh
     const now = this.ctx.currentTime;
     const osc = this.ctx.createOscillator();
     const oscGain = this.ctx.createGain();
 
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(140, now);
-    osc.frequency.exponentialRampToValueAtTime(35, now + 0.18);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.exponentialRampToValueAtTime(65, now + 0.12);
 
-    oscGain.gain.setValueAtTime(0.3, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+    oscGain.gain.setValueAtTime(0.28, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.005, now + 0.12);
 
     osc.connect(oscGain);
     oscGain.connect(this.ctx.destination);
     osc.start(now);
-    osc.stop(now + 0.2);
+    osc.stop(now + 0.14);
   }
 
   playEagleCry() {
     if (!this.isInitialized || this.isMuted || !this.ctx) return;
 
+    // Melodious Forest Songbird Warble / Chirp Sequence
     const now = this.ctx.currentTime;
-    const osc = this.ctx.createOscillator();
-    const gain = this.ctx.createGain();
+    const notes = [
+      { freq: 2400, start: 0.0, dur: 0.09 },
+      { freq: 3200, start: 0.08, dur: 0.11 },
+      { freq: 2800, start: 0.18, dur: 0.10 },
+      { freq: 3600, start: 0.27, dur: 0.16 }
+    ];
 
-    osc.type = 'sawtooth';
-    // Raptor screech pitch envelope
-    osc.frequency.setValueAtTime(1800, now);
-    osc.frequency.linearRampToValueAtTime(3200, now + 0.12);
-    osc.frequency.exponentialRampToValueAtTime(1100, now + 0.55);
+    notes.forEach(n => {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
 
-    gain.gain.setValueAtTime(0.0, now);
-    gain.gain.linearRampToValueAtTime(0.25, now + 0.08);
-    gain.gain.exponentialRampToValueAtTime(0.005, now + 0.6);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(n.freq, now + n.start);
+      osc.frequency.exponentialRampToValueAtTime(n.freq * 1.25, now + n.start + n.dur);
 
-    // Bandpass for eagle timbre
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = 'bandpass';
-    filter.frequency.setValueAtTime(2200, now);
-    filter.Q.value = 3.0;
+      gain.gain.setValueAtTime(0.0, now + n.start);
+      gain.gain.linearRampToValueAtTime(0.22, now + n.start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.005, now + n.start + n.dur);
 
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.ctx.destination);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
 
-    osc.start(now);
-    osc.stop(now + 0.65);
+      osc.start(now + n.start);
+      osc.stop(now + n.start + n.dur + 0.02);
+    });
   }
 
   playPickup() {

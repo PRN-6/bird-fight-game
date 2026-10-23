@@ -26,21 +26,19 @@ export class HUD {
     this.cdWind = document.getElementById('cd-wind');
     this.cdShockwave = document.getElementById('cd-shockwave');
 
-    // Artificial Horizon Elements
-    this.horizonLadder = document.getElementById('hud-horizon-ladder');
-    this.horizonReticle = document.getElementById('hud-horizon-reticle');
-
-    // Minimap
-    this.minimapCanvas = document.getElementById('minimap-canvas');
-    if (this.minimapCanvas) {
-      this.minimapCtx = this.minimapCanvas.getContext('2d');
-    }
-
     // Inventory elements
     this.twigCount = document.getElementById('inv-twigs');
     this.featherCount = document.getElementById('inv-feathers');
     this.pebbleCount = document.getElementById('inv-pebbles');
     this.berryCount = document.getElementById('inv-berries');
+
+    // Nest Base elements
+    this.nestBadge = document.getElementById('hud-nest-badge');
+    this.nestPrompt = document.getElementById('hud-nest-prompt');
+    this.nestPromptTitle = document.getElementById('nest-prompt-title');
+    this.nestPromptReq = document.getElementById('nest-prompt-req');
+    this.btnUpgradeNest = document.getElementById('btn-upgrade-nest');
+    this.btnDepositPrompt = document.getElementById('btn-deposit-prompt');
 
     // Speed Lines Canvas
     this.speedCanvas = document.getElementById('speed-lines-canvas');
@@ -103,8 +101,12 @@ export class HUD {
     // Flight State Badge
     if (this.flightStateBadge) {
       if (this.bird.isGrounded) {
-        this.flightStateBadge.textContent = 'PERCHED / GROUNDED';
+        const onBranch = this.bird.perchedSurface && this.bird.perchedSurface.isBranch;
+        this.flightStateBadge.textContent = onBranch ? 'PERCHED ON BRANCH' : 'LANDED ON FOREST FLOOR';
         this.flightStateBadge.className = 'state-badge badge-grounded';
+      } else if (aero.isLanding) {
+        this.flightStateBadge.textContent = 'LANDING APPROACH';
+        this.flightStateBadge.className = 'state-badge badge-flare';
       } else if (aero.isTucking) {
         this.flightStateBadge.textContent = 'HIGH SPEED DIVE';
         this.flightStateBadge.className = 'state-badge badge-dive';
@@ -130,109 +132,45 @@ export class HUD {
       this.thermalIndicator.style.display = aero.inUpdraft ? 'flex' : 'none';
     }
 
-    // Artificial Horizon Pitch & Roll update
-    if (this.horizonLadder) {
-      const euler = this.bird.rotation;
-      const pitchOffset = euler.x * 60; // Pixels per radian pitch
-      const rollDeg = -euler.z * (180 / Math.PI);
-      this.horizonLadder.style.transform = `rotate(${rollDeg}deg) translateY(${pitchOffset}px)`;
-    }
-
     // Inventory Display
     if (this.twigCount) this.twigCount.textContent = this.bird.inventory.twigs || 0;
     if (this.featherCount) this.featherCount.textContent = this.bird.inventory.feathers || 0;
     if (this.pebbleCount) this.pebbleCount.textContent = this.bird.inventory.pebbles || 0;
     if (this.berryCount) this.berryCount.textContent = this.bird.inventory.berries || 0;
 
-    // Render Minimap Radar
-    this._drawMinimap();
+    // Nest Base Level & Near-Nest Upgrade Prompt
+    if (this.nestBadge) {
+      this.nestBadge.textContent = `LVL ${this.world.nestLevel || 1}`;
+    }
+
+    if (this.world.nestSite) {
+      const distToNest = this.bird.position.distanceTo(this.world.nestSite.position);
+      const isNearNest = (distToNest < 16.0);
+
+      if (this.nestPrompt) {
+        if (isNearNest) {
+          this.nestPrompt.style.display = 'flex';
+          const nextLvl = this.world.nestLevel + 1;
+          const req = this.world.nestUpgradeRequirements[nextLvl];
+          if (req) {
+            if (this.nestPromptReq) {
+              this.nestPromptReq.textContent = `Req: ${req.twigs} Twigs, ${req.feathers} Feathers, ${req.pebbles} Acorns, ${req.berries} Berries`;
+            }
+          } else {
+            if (this.nestPromptReq) this.nestPromptReq.textContent = '🌟 Nest is at Maximum Royal Level (4/4)!';
+          }
+        } else {
+          this.nestPrompt.style.display = 'none';
+        }
+      }
+
+      if (this.btnUpgradeNest) {
+        this.btnUpgradeNest.style.display = isNearNest ? 'block' : 'none';
+      }
+    }
 
     // Render Speed Wind Streaks
     this._drawSpeedLines(aero.airspeed);
-  }
-
-  _drawMinimap() {
-    if (!this.minimapCtx || !this.minimapCanvas) return;
-    const ctx = this.minimapCtx;
-    const w = this.minimapCanvas.width;
-    const h = this.minimapCanvas.height;
-    const cx = w / 2;
-    const cy = h / 2;
-    const radarScale = 0.22; // Pixels per meter
-
-    ctx.clearRect(0, 0, w, h);
-
-    // Radar grid rings
-    ctx.strokeStyle = 'rgba(100, 220, 255, 0.2)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(cx, cy, 35, 0, Math.PI * 2);
-    ctx.arc(cx, cy, 70, 0, Math.PI * 2);
-    ctx.stroke();
-
-    const birdX = this.bird.position.x;
-    const birdZ = this.bird.position.z;
-
-    // Draw Thermals on Minimap
-    this.world.updrafts.forEach(u => {
-      const dx = (u.position.x - birdX) * radarScale;
-      const dz = (u.position.z - birdZ) * radarScale;
-      if (Math.hypot(dx, dz) < cx - 5) {
-        ctx.fillStyle = 'rgba(255, 215, 0, 0.6)';
-        ctx.beginPath();
-        ctx.arc(cx + dx, cy + dz, 5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    });
-
-    // Draw Enemy Birds on Minimap
-    if (this.world.enemies) {
-      this.world.enemies.forEach(enemy => {
-        if (!enemy.isDead) {
-          const ex = (enemy.position.x - birdX) * radarScale;
-          const ez = (enemy.position.z - birdZ) * radarScale;
-          if (Math.hypot(ex, ez) < cx - 5) {
-            ctx.fillStyle = '#ff2255';
-            ctx.beginPath();
-            ctx.arc(cx + ex, cy + ez, 4, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-      });
-    }
-
-    // Draw Nest Sanctuary Icon on Minimap
-    if (this.world.nestSite) {
-      const nx = (this.world.nestSite.position.x - birdX) * radarScale;
-      const nz = (this.world.nestSite.position.z - birdZ) * radarScale;
-      const dist = Math.hypot(nx, nz);
-      const clampedX = dist > cx - 8 ? cx + (nx / dist) * (cx - 10) : cx + nx;
-      const clampedY = dist > cy - 8 ? cy + (nz / dist) * (cy - 10) : cy + nz;
-
-      ctx.fillStyle = '#ff8800';
-      ctx.beginPath();
-      ctx.arc(clampedX, clampedY, 5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#ffffff';
-      ctx.stroke();
-    }
-
-    // Draw Bird Center Heading Indicator
-    ctx.save();
-    ctx.translate(cx, cy);
-    const forward = this.bird.aerodynamics._forward;
-    const heading = Math.atan2(forward.x, forward.z);
-    ctx.rotate(heading);
-
-    ctx.fillStyle = '#00f2ff';
-    ctx.beginPath();
-    ctx.moveTo(0, -9);
-    ctx.lineTo(6, 6);
-    ctx.lineTo(0, 3);
-    ctx.lineTo(-6, 6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
   }
 
   _drawSpeedLines(airspeed) {
@@ -243,9 +181,9 @@ export class HUD {
 
     ctx.clearRect(0, 0, w, h);
 
-    if (airspeed < 26) return; // Only show during high speed
+    if (airspeed < 14) return; // Only show during high speed
 
-    const intensity = Math.min(1.0, (airspeed - 26) / 25);
+    const intensity = Math.min(1.0, (airspeed - 14) / 12);
     const cx = w / 2;
     const cy = h / 2;
 

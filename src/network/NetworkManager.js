@@ -117,6 +117,12 @@ export class NetworkManager {
   _removePlayer(peerId) {
     const remote = this.remotePlayers.get(peerId);
     if (remote) {
+      if (this.game.world && this.game.world.enemies) {
+        const idx = this.game.world.enemies.indexOf(remote);
+        if (idx >= 0) {
+          this.game.world.enemies.splice(idx, 1);
+        }
+      }
       remote.destroy();
       this.remotePlayers.delete(peerId);
     }
